@@ -1,9 +1,15 @@
 import { GoogleSpreadsheet } from 'google-spreadsheet'
 import { DatabaseOptions, isDatabaseOptions, InternalDatabase, DBValue, Table, isDBValue } from './types'
 
-export class Database {
+/** The class you use for the database */
+export default class Database {
+  /** The internal google-spreadsheet instnce used to make API calls */
   private _spreadsheet: GoogleSpreadsheet
+
+  /** The Promise returned by this.init(), that can be used to make sure the db is ready before making calls */
   private _initializer: Promise<void>
+
+  /** The object that stores the rows that get cached during initialization */
   private _db: InternalDatabase
 
   constructor(options: DatabaseOptions) {
@@ -23,10 +29,7 @@ export class Database {
     })
   }
 
-  get ready() {
-    return !this._initializer
-  }
-
+  /** Initializes the database */
   private async init(options: DatabaseOptions) {
     const { auth } = options
 
@@ -88,14 +91,21 @@ export class Database {
     this._spreadsheet = ss
   }
 
+  /** An array with all the cached sheet names */
   get sheetNames() {
     return Object.keys(this._db)
   }
 
+  /** Returns whether a string is one of the cached sheet names */
   private _isSheetName(name: string) {
     return this.sheetNames.includes(name)
   }
 
+  /**
+   * Gets a value from one of the sheets
+   * @param sheetName The name of the sheet you want to get the value from
+   * @param key The key (value in the first column) of the row you want to get the value from
+   */
   async get(sheetName: string, key: string): Promise<DBValue | undefined> {
     await this._initializer
 
@@ -116,6 +126,12 @@ export class Database {
     }
   }
 
+  /**
+   * Sets a value in one of the sheets
+   * @param sheetName The name of the sheet you want to set the value in
+   * @param key The key (value in the first column) of the row you want to set the value for
+   * @param value The value you want to set, needs to be something that can be converted to JSON (string, number, boolean or object)
+   */
   async set(sheetName: string, key: string, value: DBValue) {
     await this._initializer
 
@@ -136,6 +152,11 @@ export class Database {
     }
   }
 
+  /**
+   * Deletes a database entry
+   * @param sheetName The name of the sheet yuo want to delete the entry from
+   * @param key The key (value in the first column) of the entry row
+   */
   async delete(sheetName: string, key: string) {
     await this._initializer
 
@@ -152,6 +173,11 @@ export class Database {
   }
 }
 
+/**
+ * Finds a row in a cached sheet
+ * @param sheet The cached sheet you want to search the row in
+ * @param key The key (value in the first column) of the row
+ */
 function findRow(sheet: Table, key: string) {
   return sheet.rows.find(r => r[sheet.keyID] == key)
 }
