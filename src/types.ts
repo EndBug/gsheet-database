@@ -33,10 +33,14 @@ export function isDatabaseOptions(value: any): value is DatabaseOptions {
 
 export type InternalDatabase = Record<string, Table>
 
-interface Table {
+export interface Table {
+  sheetID: string
   keyID: string
   valueID: string
   rows: GoogleSpreadsheetRow[]
 }
 
-export type DBValue = string | boolean | number | object | undefined
+export type DBValue = string | boolean | number | object
+export function isDBValue(value: any): value is DBValue {
+  return ['string', 'boolean', 'number', 'object'].includes(typeof value)
+}

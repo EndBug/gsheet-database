@@ -1,5 +1,5 @@
 import { GoogleSpreadsheet } from 'google-spreadsheet'
-import { DatabaseOptions, isDatabaseOptions, InternalDatabase, DBValue } from './types'
+import { DatabaseOptions, isDatabaseOptions, InternalDatabase, DBValue, Table, isDBValue } from './types'
 
 export class Database {
   private _spreadsheet: GoogleSpreadsheet
@@ -74,7 +74,8 @@ export class Database {
       this._db[title] = {
         keyID,
         valueID,
-        rows
+        rows,
+        sheetID: sheet.sheetId
       }
     }
 
@@ -95,13 +96,14 @@ export class Database {
     return this.sheetNames.includes(name)
   }
 
-  async get(sheetName: string, key: string): Promise<DBValue> {
+  async get(sheetName: string, key: string): Promise<DBValue | undefined> {
     await this._initializer
 
-    if (!this._isSheetName(sheetName)) throw new Error('The provided sheet name doesn\'t exist in the database')
+    if (!this._isSheetName(sheetName)) throw new Error(`The provided sheet name doesn't exist in the database (received: ${sheetName} (type: ${typeof sheetName}))`)
+    if (!key || typeof key != 'string') throw new Error(`The provided key is either empty or not a string (received: ${key} (type: ${typeof key}))`)
 
     const sheet = this._db[sheetName],
-      row = sheet.rows.find(r => r[sheet.keyID] == key)
+      row = findRow(sheet, key)
 
     if (row) {
       const value = row[sheet.valueID]
@@ -111,8 +113,45 @@ export class Database {
       } catch {
         return value
       }
-
     }
   }
 
+  async set(sheetName: string, key: string, value: DBValue) {
+    await this._initializer
+
+    if (!this._isSheetName(sheetName)) throw new Error(`The provided sheet name doesn't exist in the database (received: ${sheetName} (type: ${typeof sheetName}))`)
+    if (!key || typeof key != 'string') throw new Error(`The provided key is either empty or not a string (received: ${key} (type: ${typeof key}))`)
+    if (!isDBValue(value)) throw new Error(`The provided value is not valid (received: ${value} (type: ${typeof value}))`)
+
+    const sheet = this._db[sheetName],
+      existing = findRow(sheet, key),
+      stringValue = JSON.stringify(value)
+
+    if (existing) {
+      existing[sheet.valueID] = stringValue
+      await existing.save()
+      return existing
+    } else {
+      return this._spreadsheet.sheetsById[sheet.sheetID]?.addRow([key, stringValue])
+    }
+  }
+
+  async delete(sheetName: string, key: string) {
+    await this._initializer
+
+    if (!this._isSheetName(sheetName)) throw new Error(`The provided sheet name doesn't exist in the database (received: ${sheetName} (type: ${typeof sheetName}))`)
+    if (!key || typeof key != 'string') throw new Error(`The provided key is either empty or not a string (received: ${key} (type: ${typeof key}))`)
+
+    const sheet = this._db[sheetName],
+      existing = findRow(sheet, key)
+
+    if (existing) {
+      await existing.delete()
+      return existing
+    }
+  }
+}
+
+function findRow(sheet: Table, key: string) {
+  return sheet.rows.find(r => r[sheet.keyID] == key)
 }
