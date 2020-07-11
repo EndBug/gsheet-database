@@ -3,14 +3,16 @@
     "node": true,
     "browser": true,
     "amd": true,
-    "es6": true
+    "es6": true,
+    "jest": true
   },
   "root": true,
   "extends": [
     "eslint:recommended"
   ],
   "plugins": [
-    "@typescript-eslint"
+    "@typescript-eslint",
+    "jest"
   ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {

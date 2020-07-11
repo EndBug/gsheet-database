@@ -1,13 +1,18 @@
 import { GoogleSpreadsheet } from 'google-spreadsheet'
 import { DatabaseOptions, isDatabaseOptions, InternalDatabase, DBValue, Table, isDBValue } from './types'
 
+export * from './types'
+
 /** The class you use for the database */
 export default class Database {
+  /** The options used to create the Database */
+  options: DatabaseOptions
+
   /** The internal google-spreadsheet instnce used to make API calls */
   private _spreadsheet: GoogleSpreadsheet
 
   /** The Promise returned by this.init(), that can be used to make sure the db is ready before making calls */
-  private _initializer: Promise<void>
+  _initializer?: Promise<void>
 
   /** The object that stores the rows that get cached during initialization */
   private _db: InternalDatabase
@@ -15,12 +20,14 @@ export default class Database {
   constructor(options: DatabaseOptions) {
     if (!isDatabaseOptions(options)) throw new Error('Invalid options provided.')
 
+    this.options = options
+
     this._spreadsheet = new GoogleSpreadsheet(options.sheetID)
     this._db = {}
 
-    this._initializer = this.init(options).catch(err => {
+    this._initializer = this.init().catch(err => {
       const msg = '[gsheet-database] The database has failed while initializing, check the error below.\n'
-      if (err instanceof Error) {
+      if (err.message) {
         err.message = msg + err.message
         throw err
       } else {
@@ -30,15 +37,13 @@ export default class Database {
   }
 
   /** Initializes the database */
-  private async init(options: DatabaseOptions) {
-    const { auth } = options
-
+  private async init() {
+    const { auth } = this.options
     const ss = this._spreadsheet
 
     if (auth.type == 'apiKey') ss.useApiKey(auth.key)
     if (auth.type == 'rawAccessToken') ss.useRawAccessToken(auth.token)
     if (auth.type == 'serviceAccount') await ss.useServiceAccountAuth(auth.creds)
-
     await ss.loadInfo()
 
     const duplicate = [],
@@ -48,6 +53,7 @@ export default class Database {
       emptyHeaders = [] // This should never happen, but still...
 
     for (const sheet of ss.sheetsByIndex) {
+      await sheet.loadHeaderRow()
       const { title, headerValues } = sheet
 
       if (this._db[title] !== undefined) {
@@ -107,6 +113,7 @@ export default class Database {
    * @param key The key (value in the first column) of the row you want to get the value from
    */
   async get(sheetName: string, key: string): Promise<DBValue | undefined> {
+    if (!this._initializer) this._initializer = this.init()
     await this._initializer
 
     if (!this._isSheetName(sheetName)) throw new Error(`The provided sheet name doesn't exist in the database (received: ${sheetName} (type: ${typeof sheetName}))`)
@@ -133,6 +140,7 @@ export default class Database {
    * @param value The value you want to set, needs to be something that can be converted to JSON (string, number, boolean or object)
    */
   async set(sheetName: string, key: string, value: DBValue) {
+    if (!this._initializer) this._initializer = this.init()
     await this._initializer
 
     if (!this._isSheetName(sheetName)) throw new Error(`The provided sheet name doesn't exist in the database (received: ${sheetName} (type: ${typeof sheetName}))`)
@@ -154,10 +162,11 @@ export default class Database {
 
   /**
    * Deletes a database entry
-   * @param sheetName The name of the sheet yuo want to delete the entry from
+   * @param sheetName The name of the sheet you want to delete the entry from
    * @param key The key (value in the first column) of the entry row
    */
   async delete(sheetName: string, key: string) {
+    if (!this._initializer) this._initializer = this.init()
     await this._initializer
 
     if (!this._isSheetName(sheetName)) throw new Error(`The provided sheet name doesn't exist in the database (received: ${sheetName} (type: ${typeof sheetName}))`)
