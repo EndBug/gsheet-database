@@ -12,10 +12,13 @@ export default class Database {
   private _spreadsheet: GoogleSpreadsheet
 
   /** The Promise returned by this.init(), that can be used to make sure the db is ready before making calls */
-  _initializer?: Promise<void>
+  private _initializer: Promise<void>
 
   /** The object that stores the rows that get cached during initialization */
   private _db: InternalDatabase
+
+  /** Whether the database is marked as ready */
+  private _ready: boolean
 
   constructor(options: DatabaseOptions) {
     if (!isDatabaseOptions(options)) throw new Error('Invalid options provided.')
@@ -25,7 +28,12 @@ export default class Database {
     this._spreadsheet = new GoogleSpreadsheet(options.sheetID)
     this._db = {}
 
-    this._initializer = this.init().catch(err => {
+    this._ready = false
+    this._initializer = this.init().then(() => {
+      this._ready = true
+    }).catch(err => {
+      if (options.silent) return
+
       const msg = '[gsheet-database] The database has failed while initializing, check the error below.\n'
       if (err.message) {
         err.message = msg + err.message
@@ -97,14 +105,23 @@ export default class Database {
     this._spreadsheet = ss
   }
 
+  /** The Promise returned by this.init(), that can be used to make sure the db is ready before making calls */
+  get initializer() {
+    return this._initializer
+  }
+
   /** An array with all the cached sheet names */
   get sheetNames() {
     return Object.keys(this._db)
   }
-
   /** Returns whether a string is one of the cached sheet names */
   private _isSheetName(name: string) {
     return this.sheetNames.includes(name)
+  }
+
+  /** Whether the database is marked as ready */
+  get isReady() {
+    return this._ready
   }
 
   /**

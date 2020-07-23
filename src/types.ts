@@ -7,6 +7,9 @@ export interface DatabaseOptions {
 
   /** Your auth method: using a service account, an API key or an access token */
   auth: apiKeyAuth | rawAccessTokenAuth | serviceAccountAuth
+
+  /** Whether to ignore failure warnings */
+  silent?: boolean
 }
 
 interface apiKeyAuth {
@@ -35,6 +38,7 @@ export function isDatabaseOptions(value: any): value is DatabaseOptions {
         value.auth.type == 'rawAccessToken' ? (typeof value.auth.token == 'string' && !!value.auth.token) :
           value.auth.type == 'serviceAccount' ? typeof value.auth.creds == 'object' : false
     )
+    && ['undefined', 'boolean'].includes(typeof value.silent)
 }
 
 /** Type for the internal database */
