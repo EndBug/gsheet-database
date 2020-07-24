@@ -1,5 +1,5 @@
 import { GoogleSpreadsheet } from 'google-spreadsheet'
-import { DatabaseOptions, isDatabaseOptions, InternalDatabase, DBValue, Table, isDBValue } from './types'
+import { DatabaseOptions, isDatabaseOptions, InternalDatabase, DBValue, Table, isDBValue, parseDBValue } from './types'
 
 export * from './types'
 
@@ -124,6 +124,31 @@ export default class Database {
     return this._ready
   }
 
+  /** A record with the sheet names as keys and the [key, value] arrays with the headers as values */
+  get headers() {
+    const res: Record<string, [string, string]> = {}
+
+    for (const title in this._db) {
+      const table = this._db[title]
+      res[title] = [table.keyID, table.valueID]
+    }
+
+    return res
+  }
+
+  /** Updates the cached rows for a given sheet */
+  private async _updateSheet(sheetName: string) {
+    const sheet = this._spreadsheet.sheetsByIndex.find(s => s.title == sheetName)
+    if (!sheet) return
+
+    const rows = await sheet.getRows()
+    if (!rows) return
+
+    this._db[sheetName].rows = rows
+
+    return this._db[sheetName]
+  }
+
   /**
    * Gets a value from one of the sheets
    * @param sheetName The name of the sheet you want to get the value from
@@ -142,11 +167,7 @@ export default class Database {
     if (row) {
       const value = row[sheet.valueID]
 
-      try {
-        return JSON.parse(value)
-      } catch {
-        return value
-      }
+      return parseDBValue(value)
     }
   }
 
@@ -166,14 +187,16 @@ export default class Database {
 
     const sheet = this._db[sheetName],
       existing = findRow(sheet, key),
-      stringValue = JSON.stringify(value)
+      stringValue = typeof value == 'object' ? JSON.stringify(value) : value
 
     if (existing) {
       existing[sheet.valueID] = stringValue
       await existing.save()
       return existing
     } else {
-      return this._spreadsheet.sheetsById[sheet.sheetID]?.addRow([key, stringValue])
+      const newRow = await this._spreadsheet.sheetsById[sheet.sheetID]?.addRow([key, stringValue])
+      await this._updateSheet(sheetName)
+      return newRow
     }
   }
 
@@ -194,6 +217,7 @@ export default class Database {
 
     if (existing) {
       await existing.delete()
+      await this._updateSheet(sheetName)
       return existing
     }
   }

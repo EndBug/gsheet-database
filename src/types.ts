@@ -52,10 +52,23 @@ export interface Table {
   rows: GoogleSpreadsheetRow[]
 }
 
-/** Type for the values you can put in the database. `undefined` is not allowed, you should use `.delete()` ot remove the entry instead. */
+/** Type for the values you can put in the database. `undefined` is not allowed, you should use `.delete()` to remove the entry instead. */
 export type DBValue = string | boolean | number | object
 
 /** Returns whether a value is a valid database entry value */
 export function isDBValue(value: any): value is DBValue {
   return ['string', 'boolean', 'number', 'object'].includes(typeof value)
+}
+
+/** Parses a string to be a DBValue */
+export function parseDBValue(value: string): DBValue {
+  try {
+    return JSON.parse(value)
+  } catch {
+    if (['TRUE', 'FALSE'].includes(value))
+      try { return JSON.parse((value as string).toLowerCase()) }
+      catch { }
+
+    return value
+  }
 }
