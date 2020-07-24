@@ -1,0 +1,29 @@
+name: Build
+on:
+  push:
+    paths:
+      - src/**
+      - .github/workflows/build.yml
+
+jobs:
+  build:
+    name: Build package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12.x
+
+      - run: npm install
+
+      - run: npm run build
+
+      - uses: EndBug/add-and-commit@v4
+        with:
+          message: '[auto] build: update compiled version'
+          add: dist
+          force: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
