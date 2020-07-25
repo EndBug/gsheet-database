@@ -159,7 +159,7 @@ export default class Database {
     await this._initializer
 
     if (!this._isSheetName(sheetName)) throw new Error(`The provided sheet name doesn't exist in the database (received: ${sheetName} (type: ${typeof sheetName}))`)
-    if (key && typeof key != 'string') throw new Error(`The provided key is either not a string (received: ${key} (type: ${typeof key}))`)
+    if (!['string', 'undefined'].includes(typeof key)) throw new Error(`The provided key is not a string (received: ${key} (type: ${typeof key}))`)
 
     const sheet = this._db[sheetName]
     if (key) {
