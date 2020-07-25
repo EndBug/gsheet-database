@@ -307,3 +307,56 @@ describe('Method tests: .delete()', () => {
     await expect(db.delete('sheet2', 'non-existent')).resolves.toBe(undefined)
   }, 10000)
 })
+
+describe('Mix-up', () => {
+  test('The sheet should be empty', async () => {
+    await expect(db.get('sheet4', 'first')).resolves.toBe(undefined)
+    await expect(db.get('sheet4', 'second')).resolves.toBe(undefined)
+    await expect(db.get('sheet4', 'third')).resolves.toBe(undefined)
+    await expect(db.get('sheet4', 'fourth')).resolves.toBe(undefined)
+  })
+
+  test('Set some new entries', async () => {
+    await db.set('sheet4', 'first', 123)
+    await expect(db.get('sheet4', 'first')).resolves.toBe(123)
+
+    await db.set('sheet4', 'second', false)
+    await expect(db.get('sheet4', 'second')).resolves.toBe(false)
+  })
+
+  test('Edit existing and add new', async () => {
+    await db.set('sheet4', 'first', 456)
+    await expect(db.get('sheet4', 'first')).resolves.toBe(456)
+
+    await db.set('sheet4', 'third', 'abc')
+    await expect(db.get('sheet4', 'third')).resolves.toBe('abc')
+
+    await db.set('sheet4', 'second', true)
+    await expect(db.get('sheet4', 'second')).resolves.toBe(true)
+  })
+
+  test('Delete existing, add new and edit existing', async () => {
+    await db.delete('sheet4', 'first')
+    await expect(db.get('sheet4', 'first')).resolves.toBe(undefined)
+
+    await db.set('sheet4', 'fourth', { foo: 'bar' })
+    await expect(db.get('sheet4', 'fourth')).resolves.toStrictEqual({ foo: 'bar' })
+
+    await db.set('sheet4', 'second', 999)
+    await expect(db.get('sheet4', 'second')).resolves.toBe(999)
+  })
+
+  test('Delete everything', async () => {
+    await db.delete('sheet4', 'first')
+    await expect(db.get('sheet4', 'first')).resolves.toBe(undefined)
+
+    await db.delete('sheet4', 'second')
+    await expect(db.get('sheet4', 'second')).resolves.toBe(undefined)
+
+    await db.delete('sheet4', 'third')
+    await expect(db.get('sheet4', 'third')).resolves.toBe(undefined)
+
+    await db.delete('sheet4', 'fourth')
+    await expect(db.get('sheet4', 'fourth')).resolves.toBe(undefined)
+  })
+})
