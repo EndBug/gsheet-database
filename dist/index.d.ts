@@ -32,7 +32,8 @@ export default class Database {
      * @param sheetName The name of the sheet you want to get the value from
      * @param key The key (value in the first column) of the row you want to get the value from. If none is provided, returns a record with every key-value entry.
      */
-    get(sheetName: string, key?: string): Promise<DBValue | undefined>;
+    get(sheetName: string): Promise<Record<string, DBValue>>;
+    get(sheetName: string, key: string): Promise<DBValue | undefined>;
     /**
      * Sets a value in one of the sheets
      * @param sheetName The name of the sheet you want to set the value in

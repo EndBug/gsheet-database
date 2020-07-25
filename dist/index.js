@@ -218,11 +218,6 @@ var Database = /** @class */ (function () {
             });
         });
     };
-    /**
-     * Gets a value from one of the sheets
-     * @param sheetName The name of the sheet you want to get the value from
-     * @param key The key (value in the first column) of the row you want to get the value from. If none is provided, returns a record with every key-value entry.
-     */
     Database.prototype.get = function (sheetName, key) {
         return __awaiter(this, void 0, void 0, function () {
             var sheet, row, value, res_1, keyID_1, valueID_1;
