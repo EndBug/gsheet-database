@@ -236,8 +236,8 @@ var Database = /** @class */ (function () {
                         _a.sent();
                         if (!this._isSheetName(sheetName))
                             throw new Error("The provided sheet name doesn't exist in the database (received: " + sheetName + " (type: " + typeof sheetName + "))");
-                        if (key && typeof key != 'string')
-                            throw new Error("The provided key is either not a string (received: " + key + " (type: " + typeof key + "))");
+                        if (!['string', 'undefined'].includes(typeof key))
+                            throw new Error("The provided key is not a string (received: " + key + " (type: " + typeof key + "))");
                         sheet = this._db[sheetName];
                         if (key) {
                             row = findRow(sheet, key);
