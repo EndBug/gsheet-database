@@ -154,6 +154,8 @@ export default class Database {
    * @param sheetName The name of the sheet you want to get the value from
    * @param key The key (value in the first column) of the row you want to get the value from. If none is provided, returns a record with every key-value entry.
    */
+  async get(sheetName: string): Promise<Record<string, DBValue>>;
+  async get(sheetName: string, key: string): Promise<DBValue | undefined>;
   async get(sheetName: string, key?: string): Promise<DBValue | undefined> {
     if (!this._initializer) this._initializer = this.init()
     await this._initializer
