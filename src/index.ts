@@ -152,22 +152,27 @@ export default class Database {
   /**
    * Gets a value from one of the sheets
    * @param sheetName The name of the sheet you want to get the value from
-   * @param key The key (value in the first column) of the row you want to get the value from
+   * @param key The key (value in the first column) of the row you want to get the value from. If none is provided, returns a record with every key-value entry.
    */
-  async get(sheetName: string, key: string): Promise<DBValue | undefined> {
+  async get(sheetName: string, key?: string): Promise<DBValue | undefined> {
     if (!this._initializer) this._initializer = this.init()
     await this._initializer
 
     if (!this._isSheetName(sheetName)) throw new Error(`The provided sheet name doesn't exist in the database (received: ${sheetName} (type: ${typeof sheetName}))`)
-    if (!key || typeof key != 'string') throw new Error(`The provided key is either empty or not a string (received: ${key} (type: ${typeof key}))`)
+    if (key && typeof key != 'string') throw new Error(`The provided key is either not a string (received: ${key} (type: ${typeof key}))`)
 
-    const sheet = this._db[sheetName],
-      row = findRow(sheet, key)
-
-    if (row) {
-      const value = row[sheet.valueID]
-
-      return parseDBValue(value)
+    const sheet = this._db[sheetName]
+    if (key) {
+      const row = findRow(sheet, key)
+      if (row) {
+        const value = row[sheet.valueID]
+        return parseDBValue(value)
+      }
+    } else {
+      const res: Record<string, DBValue> = {},
+        { keyID, valueID } = sheet
+      sheet.rows.forEach(row => res[row[keyID]] = parseDBValue(row[valueID]))
+      return res
     }
   }
 

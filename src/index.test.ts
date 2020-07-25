@@ -162,10 +162,7 @@ describe('Method tests: .get()', () => {
     await expect(db.get()).rejects.toThrow()
     // @ts-expect-error
     await expect(db.get(0)).rejects.toThrow()
-    // @ts-expect-error
     await expect(db.get('abc')).rejects.toThrow()
-    // @ts-expect-error
-    await expect(db.get('sheet1')).rejects.toThrow()
     // @ts-expect-error
     await expect(db.get('sheet1', 0)).rejects.toThrow()
   })
@@ -179,6 +176,12 @@ describe('Method tests: .get()', () => {
     await expect(db.get('sheet1', 'int')).resolves.toBe(123)
     await expect(db.get('sheet1', 'bool')).resolves.toBe(false)
     await expect(db.get('sheet1', 'obj')).resolves.toStrictEqual(testObj)
+    await expect(db.get('sheet1')).resolves.toStrictEqual({
+      str: 'abc',
+      int: 123,
+      bool: false,
+      obj: testObj
+    })
   })
 })
 
