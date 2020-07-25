@@ -221,11 +221,11 @@ var Database = /** @class */ (function () {
     /**
      * Gets a value from one of the sheets
      * @param sheetName The name of the sheet you want to get the value from
-     * @param key The key (value in the first column) of the row you want to get the value from
+     * @param key The key (value in the first column) of the row you want to get the value from. If none is provided, returns a record with every key-value entry.
      */
     Database.prototype.get = function (sheetName, key) {
         return __awaiter(this, void 0, void 0, function () {
-            var sheet, row, value;
+            var sheet, row, value, res_1, keyID_1, valueID_1;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -236,12 +236,20 @@ var Database = /** @class */ (function () {
                         _a.sent();
                         if (!this._isSheetName(sheetName))
                             throw new Error("The provided sheet name doesn't exist in the database (received: " + sheetName + " (type: " + typeof sheetName + "))");
-                        if (!key || typeof key != 'string')
-                            throw new Error("The provided key is either empty or not a string (received: " + key + " (type: " + typeof key + "))");
-                        sheet = this._db[sheetName], row = findRow(sheet, key);
-                        if (row) {
-                            value = row[sheet.valueID];
-                            return [2 /*return*/, types_1.parseDBValue(value)];
+                        if (key && typeof key != 'string')
+                            throw new Error("The provided key is either not a string (received: " + key + " (type: " + typeof key + "))");
+                        sheet = this._db[sheetName];
+                        if (key) {
+                            row = findRow(sheet, key);
+                            if (row) {
+                                value = row[sheet.valueID];
+                                return [2 /*return*/, types_1.parseDBValue(value)];
+                            }
+                        }
+                        else {
+                            res_1 = {}, keyID_1 = sheet.keyID, valueID_1 = sheet.valueID;
+                            sheet.rows.forEach(function (row) { return res_1[row[keyID_1]] = types_1.parseDBValue(row[valueID_1]); });
+                            return [2 /*return*/, res_1];
                         }
                         return [2 /*return*/];
                 }
