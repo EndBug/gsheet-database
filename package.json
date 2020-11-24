@@ -21,8 +21,8 @@
   },
   "homepage": "https://github.com/EndBug/gsheet-database#readme",
   "dependencies": {
-    "google-spreadsheet": "^3.0.11",
-    "@types/google-spreadsheet": "^3.0.0"
+    "@types/google-spreadsheet": "^3.0.0",
+    "google-spreadsheet": "^3.0.11"
   },
   "devDependencies": {
     "@types/jest": "^26.0.3",
